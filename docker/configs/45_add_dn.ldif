@@ -1,0 +1,137 @@
+dn: ads-partitionId=$RDN_VAL,ou=partitions,ads-directoryServiceId=default,ou=config
+objectclass: top
+objectClass: ads-base
+objectclass: ads-partition
+objectclass: ads-jdbmPartition
+ads-partitionSuffix: $DN
+ads-contextentry:: $CTX_ENTRY
+ads-jdbmpartitionoptimizerenabled: TRUE
+ads-partitioncachesize: 10000
+ads-partitionsynconwrite: TRUE
+ads-partitionid: $RDN_VAL
+ads-enabled: TRUE
+
+dn: ou=indexes,ads-partitionId=$RDN_VAL,ou=partitions,ads-directoryServiceId=default,ou=config
+objectclass: organizationalUnit
+objectclass: top
+ou: indexes
+
+dn: ads-indexAttributeId=administrativeRole,ou=indexes,ads-partitionId=$RDN_VAL,ou=partitions,ads-directoryServiceId=default,ou=config
+objectclass: ads-base
+objectclass: ads-index
+objectclass: ads-jdbmIndex
+objectclass: top
+ads-indexattributeid: administrativeRole
+ads-indexhasreverse: FALSE
+ads-enabled: TRUE
+ads-indexcachesize: 100
+
+dn: ads-indexAttributeId=apacheAlias,ou=indexes,ads-partitionId=$RDN_VAL,ou=partitions,ads-directoryServiceId=default,ou=config
+objectclass: ads-base
+objectclass: ads-index
+objectclass: ads-jdbmIndex
+objectclass: top
+ads-indexattributeid: apacheAlias
+ads-indexhasreverse: FALSE
+ads-enabled: TRUE
+ads-indexcachesize: 100
+
+dn: ads-indexAttributeId=apacheOneAlias,ou=indexes,ads-partitionId=$RDN_VAL,ou=partitions,ads-directoryServiceId=default,ou=config
+objectclass: ads-base
+objectclass: ads-index
+objectclass: ads-jdbmIndex
+objectclass: top
+ads-indexattributeid: apacheOneAlias
+ads-indexhasreverse: FALSE
+ads-enabled: TRUE
+ads-indexcachesize: 100
+
+dn: ads-indexAttributeId=apachePresence,ou=indexes,ads-partitionId=$RDN_VAL,ou=partitions,ads-directoryServiceId=default,ou=config
+objectclass: ads-base
+objectclass: ads-index
+objectclass: ads-jdbmIndex
+objectclass: top
+ads-indexattributeid: apachePresence
+ads-indexhasreverse: FALSE
+ads-enabled: TRUE
+ads-indexcachesize: 100
+
+dn: ads-indexAttributeId=apacheRdn,ou=indexes,ads-partitionId=$RDN_VAL,ou=partitions,ads-directoryServiceId=default,ou=config
+objectclass: ads-base
+objectclass: ads-index
+objectclass: ads-jdbmIndex
+objectclass: top
+ads-indexattributeid: apacheRdn
+ads-indexhasreverse: TRUE
+ads-enabled: TRUE
+ads-indexcachesize: 100
+
+dn: ads-indexAttributeId=apacheSubAlias,ou=indexes,ads-partitionId=$RDN_VAL,ou=partitions,ads-directoryServiceId=default,ou=config
+objectclass: ads-base
+objectclass: ads-index
+objectclass: ads-jdbmIndex
+objectclass: top
+ads-indexattributeid: apacheSubAlias
+ads-indexhasreverse: FALSE
+ads-enabled: TRUE
+ads-indexcachesize: 100
+
+dn: ads-indexAttributeId=dc,ou=indexes,ads-partitionId=$RDN_VAL,ou=partitions,ads-directoryServiceId=default,ou=config
+objectclass: ads-base
+objectclass: ads-index
+objectclass: ads-jdbmIndex
+objectclass: top
+ads-indexattributeid: dc
+ads-indexhasreverse: FALSE
+ads-enabled: TRUE
+ads-indexcachesize: 100
+
+dn: ads-indexAttributeId=entryCSN,ou=indexes,ads-partitionId=$RDN_VAL,ou=partitions,ads-directoryServiceId=default,ou=config
+objectclass: ads-base
+objectclass: ads-index
+objectclass: ads-jdbmIndex
+objectclass: top
+ads-indexattributeid: entryCSN
+ads-indexhasreverse: FALSE
+ads-enabled: TRUE
+ads-indexcachesize: 100
+
+dn: ads-indexAttributeId=krb5PrincipalName,ou=indexes,ads-partitionId=$RDN_VAL,ou=partitions,ads-directoryServiceId=default,ou=config
+objectclass: ads-base
+objectclass: ads-index
+objectclass: ads-jdbmIndex
+objectclass: top
+ads-indexattributeid: krb5PrincipalName
+ads-indexhasreverse: FALSE
+ads-enabled: TRUE
+ads-indexcachesize: 100
+
+dn: ads-indexAttributeId=objectClass,ou=indexes,ads-partitionId=$RDN_VAL,ou=partitions,ads-directoryServiceId=default,ou=config
+objectclass: ads-base
+objectclass: ads-index
+objectclass: ads-jdbmIndex
+objectclass: top
+ads-indexattributeid: objectClass
+ads-indexhasreverse: FALSE
+ads-enabled: TRUE
+ads-indexcachesize: 100
+
+dn: ads-indexAttributeId=ou,ou=indexes,ads-partitionId=$RDN_VAL,ou=partitions,ads-directoryServiceId=default,ou=config
+ads-indexattributeid: ou
+ads-indexHasReverse: FALSE
+ads-indexcachesize: 100
+objectclass: ads-index
+objectclass: ads-jdbmIndex
+objectclass: ads-base
+objectclass: top
+ads-enabled: TRUE
+
+dn: ads-indexAttributeId=uid,ou=indexes,ads-partitionId=$RDN_VAL,ou=partitions,ads-directoryServiceId=default,ou=config
+ads-indexattributeid: uid
+ads-indexHasReverse: FALSE
+ads-indexcachesize: 100
+objectclass: ads-index
+objectclass: ads-jdbmIndex
+objectclass: ads-base
+objectclass: top
+ads-enabled: TRUE

@@ -75,9 +75,9 @@ securityContext: {}
 service:
   type: ClusterIP
   ldap:
-    port: 389
+    port: 10389
   ldaps:
-    port: 636
+    port: 10636
 
 ingress:
   enabled: false

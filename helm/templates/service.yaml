@@ -8,12 +8,12 @@ spec:
   type: {{ .Values.service.type }}
   ports:
     - port: {{ .Values.service.ldap.port }}
-      targetPort: ldap
+      targetPort: 10389
       protocol: TCP
       name: ldap
     - port: {{ .Values.service.ldaps.port }}
-      targetPort: ldaps
+      targetPort: 10636
       protocol: TCP
-      name: ldap
+      name: ldaps
   selector:
     {{- include "apacheds.selectorLabels" . | nindent 4 }}

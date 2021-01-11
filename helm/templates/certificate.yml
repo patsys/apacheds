@@ -1,0 +1,96 @@
+
+{{- if .Values.apacheds.certificate.generated }}
+{{- if .Values.ingress.letsencrypt.enabled }}
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "apacheds.fullname" . }}-letsencrypt
+  namespace: {{ .Release.Namespace }}
+spec:
+  acme:
+    # The ACME server URL
+    server: {{ .Values.ingress.letsencrypt.server | default "https://acme-v02.api.letsencrypt.org/directory" }}
+    # Email address used for ACME registration
+    email: {{ .Values.ingress.letsencrypt.email }}
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: {{ include "apacheds.fullname" . }}-letsencrypt-key
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    # An empty 'selector' means that this solver matches all domains
+    {{- if .Values.ingress.letsencrypt.dns01 }}
+    - dns01:
+        {{- toYaml .Values.ingress.letsencrypt.dns01 | nindent 8 }}
+    {{- else }}
+    - http01:
+        ingress:
+          class: nginx
+    {{- end }}
+    {{- if .Values.ingress.letsencrypt.hosts }}
+      selector:
+        dnsNames:
+          {{- toYaml .Values.ingress.letsencrypt.dns01 | nindent 10 }}
+    {{- end }}
+{{- else }}
+{{- if .Values.apacheds.certificate.issuer.generated}}
+---
+apiVersion: cert-manager.io/v1
+kind: {{ .Values.apacheds.certificate.issuer.type | default "Issuer" }}
+metadata:
+  name: {{ .Values.apacheds.certificate.issuer.name  | default ( printf "%s-selfsigned"  (include "apacheds.fullname" . ) ) }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  {{- toYaml .Values.apacheds.certificate.issuer.spec | nindent 2 }}
+{{- end }}
+{{- end }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Values.apacheds.certificate.name | default ( printf "%s-crt" ( include "apacheds.fullname" . ) ) }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  secretName: {{ .Values.apacheds.certificate.secret.name | default ( printf "%s-crt" ( include "apacheds.fullname" . ) ) }}
+  commonName: {{ include "apacheds.fullname" . }}.{{ .Release.Namespace}}.svc.{{ .Values.domain }}
+  dnsNames:
+  - {{ include "apacheds.fullname" . }}.{{ .Release.Namespace}}.svc.{{ .Values.domain }}
+  {{- if .Values.ingress.enabled }}
+  {{- with .Values.ingress.hosts }}
+  - {{ .host }}
+  {{- end }}
+  {{- end }}
+  issuerRef:
+    {{- if .Values.ingress.letsencrypt.enabled }}
+    name: {{ include "apacheds.fullname" . }}-letsencrypt
+    {{- else }}
+    name: {{ .Values.apacheds.certificate.issuer.name  | default ( printf "%s-selfsigned"  (include "apacheds.fullname" . ) ) }}
+    {{- end }}
+  keystores:
+    jks:
+      create: true
+      passwordSecretRef: # Password used to encrypt the keystore
+        key: {{ .Values.apacheds.certificate.secret.pass.ref.key | default "pass" }}
+        name: {{ .Values.apacheds.certificate.secret.pass.ref.name | default ( printf "%s-keystore-pass" ( include "apacheds.fullname" . ) ) }}
+    pkcs12:
+      create: true
+      passwordSecretRef: # Password used to encrypt the keystore
+        key: {{ .Values.apacheds.certificate.secret.pass.ref.key | default "pass" }}
+        name: {{ .Values.apacheds.certificate.secret.pass.ref.name | default  ( printf "%s-keystore-pass" ( include "apacheds.fullname" . ) ) }}
+{{- if .Values.apacheds.certificate.secret.pass.generated }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.apacheds.certificate.secret.pass.ref.name | default ( printf "%s-keystore-pass" ( include "apacheds.fullname" . ) ) }}
+  namespace: {{ .Release.Namespace }}
+type: kubernetes.io/opaque
+data:
+  {{- $cert_pass := lookup "v1" "Secret" .Release.Namespace ( .Values.apacheds.certificate.secret.pass.ref.name | default ( printf "%s-keystore-pass" ( include "apacheds.fullname" . ) )) }}
+  {{- if $cert_pass  }} 
+  {{ .Values.apacheds.certificate.secret.pass.ref.key | default "pass" }}: {{ index $cert_pass.data (.Values.apacheds.certificate.secret.pass.ref.key | default "pass") }} 
+  {{- else}}
+  {{ .Values.apacheds.certificate.secret.pass.ref.key | default "pass" }}: {{ .Values.apacheds.certificate.secret.pass.password | default ( randAlphaNum 16 ) | replace "'" "''" | b64enc | quote  }}
+  {{- end}}
+{{- end }}
+{{- end }}

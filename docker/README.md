@@ -7,6 +7,7 @@ This container is designed to have an LDAP server that can be quickly launched f
 | Variable | Description | Example |
 | -------- | ----------- | ------- |
 | APACHEDS_ROOT_PASSWORD | The password for `uid=admin,ou=system` | my_password_is_secure! |
+| APACHEDS_TLS_KS_PATH | The path for the Java keystore used for ApacheDS' TLS listener | default: /etc/apacheds/apacheds.jks |
 | APACHEDS_TLS_KS_PWD | The password for the Java keystore used for ApacheDS' TLS listener | still_super_secure! |
 | DN | The root suffix of the directory | dc=domain,dc=com |
 | OBJECT_CLASS | The object class of the root suffix's object | domain |

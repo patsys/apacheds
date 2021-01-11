@@ -11,7 +11,8 @@ MAINTAINER Patrick Weber
 ENV APACHEDS_VERSION=2.0.0.AM26 \
     ADS_HOME=/usr/local/apacheds \
     ADS_INSTANCES=/var/apacheds \
-    ADS_INSTANCE_NAME=default
+    ADS_INSTANCE_NAME=default \
+    APACHEDS_TLS_KS_PATH=/etc/apacheds/apacheds.jks
 
 LABEL io.k8s.description="ApacheDS" \ 
       io.k8s.display-name="ApacheDS"

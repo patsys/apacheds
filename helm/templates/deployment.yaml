@@ -1,0 +1,136 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "apacheds.fullname" . }}
+  labels:
+    {{- include "apacheds.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "apacheds.fullname" . }}
+{{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+{{- end }}
+  selector:
+    matchLabels:
+      {{- include "apacheds.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+    {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "apacheds.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      securityContext:
+        fsGroup: 431
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "apacheds.serviceAccountName" . }}
+      initContainers:
+      - name: init-data
+        image: busybox:1.28
+        command: 
+        - sh
+        - '-c'
+        - |
+          mkdir -p /var/apacheds/default/log  /var/apacheds/default/certs \
+          && cp /certs/* /var/apacheds/default/certs/ \
+          && chown -R 431:431 /var/apacheds/default 
+        volumeMounts:
+        - name: {{ include "apacheds.fullname" . }}-data
+          mountPath: /var/apacheds
+        - name: {{ .Values.apacheds.certificate.secret.name | default ( printf "%s-crt" ( include "apacheds.fullname" . ) ) }}
+          mountPath: /certs
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext  | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env: 
+          - name: JAVA_OPTS
+            value: -Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom
+          - name: fortriggerupdates
+            value: changeme
+          - name: APACHEDS_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.apacheds.admin.secret.pass.ref.name | default ( printf "%s-admin-pass" ( include "apacheds.fullname" . ) ) }}
+                key: {{ .Values.apacheds.admin.secret.pass.ref.key | default "pass" }}
+          - name: DN
+            value: dc=domain,dc=com
+          - name: OBJECT_CLASS
+            value: domain
+          - name: APACHEDS_TLS_KS_PATH 
+            value: /var/apacheds/default/certs/keystore.p12
+          - name: APACHEDS_TLS_KS_PWD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.apacheds.certificate.secret.pass.ref.name | default ( printf "%s-keystore-pass" ( include "apacheds.fullname" . ) ) }}
+                key: {{ .Values.apacheds.certificate.secret.pass.ref.key | default "pass" }}
+          volumeMounts:
+          - name: {{ include "apacheds.fullname" . }}-data
+            mountPath: /var/apacheds
+          {{- if .Values.apacheds.additionalVolumeMounts }}
+            {{ toYaml .Values.apacheds.additionalVolumeMounts | indent 10 }}
+          {{- end }}
+          ports:
+            - name: ldap
+              containerPort: 10389
+              protocol: TCP
+            - name: ldaps
+              containerPort: 10636
+              protocol: TCP
+          livenessProbe:
+            initialDelaySeconds: 10000
+            tcpSocket:
+              port: ldap
+          readinessProbe:
+            initialDelaySeconds: 20
+            tcpSocket:
+              port: ldap
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: {{ .Values.apacheds.certificate.secret.name | default ( printf "%s-crt" ( include "apacheds.fullname" . ) ) }} 
+          secret:
+            secretName: {{ .Values.apacheds.certificate.secret.name | default ( printf "%s-crt" ( include "apacheds.fullname" . ) ) }}
+  volumeClaimTemplates:
+  - metadata:
+      name: {{ include "apacheds.fullname" . }}-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: {{ .Values.apacheds.storage.size | default "5Gi" }}
+
+{{- if .Values.apacheds.admin.secret.pass.generated }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.apacheds.admin.secret.pass.ref.name | default ( printf "%s-admin-pass" ( include "apacheds.fullname" . ) ) }}
+  namespace: {{ .Release.Namespace }}
+type: kubernetes.io/opaque
+data:
+  {{- $cert_pass := lookup "v1" "Secret" .Release.Namespace ( .Values.apacheds.admin.secret.pass.ref.name | default ( printf "%s-admin-pass" ( include "apacheds.fullname" . ) )) }}
+  {{- if $cert_pass  }} 
+  {{ .Values.apacheds.admin.secret.pass.ref.key | default "pass" }}: {{ index $cert_pass.data (.Values.apacheds.admin.secret.pass.ref.key | default "pass") }} 
+  {{- else}}
+  {{ .Values.apacheds.admin.secret.pass.ref.key | default "pass" }}: {{ .Values.apacheds.admin.secret.pass.password | default ( randAlphaNum 16 ) | replace "'" "''" | b64enc | quote  }}
+  {{- end}}
+{{- end }}

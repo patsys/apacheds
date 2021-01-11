@@ -43,8 +43,11 @@ ADS_INSTANCE="$ADS_INSTANCES/$ADS_INSTANCE_NAME"
 ADS_OUT="$ADS_INSTANCE/log/apacheds.out"
 ADS_PID="$ADS_INSTANCE/run/apacheds.pid"
 
+mkdir -p /var/apacheds/default/log/
+
 java $JAVA_OPTS $ADS_CONTROLS $ADS_EXTENDED_OPERATIONS $ADS_INTERMEDIATE_RESPONSES -Dlog4j.configuration=file:/usr/local/apacheds/instances/default/conf/log4j.properties -Dapacheds.log.dir=$ADS_INSTANCE/log -classpath $CLASSPATH org.apache.directory.server.UberjarMain $ADS_INSTANCE 2>&1 &
 apacheds_pid=$!
+
 
 timeout 30 bash -c 'while ! nc -z localhost 10389; do sleep 1; done'
 
@@ -52,21 +55,29 @@ echo "ApacheDS Started"
 
 echo "Starting TLS"
 
+export APACHEDS_PW=secret
+if [ -f /var/apacheds/default/.inited ]; then
+  export APACHEDS_PW=$APACHEDS_ROOT_PASSWORD
+fi
+
 for file in $(find /var/templates/apacheds/configs $CONFIG_FILES -type f -regex '.*\.\(sh\|ldif\)'  -printf '%f\t%p\n' | sort -k1 | cut -d$'\t' -f2); do
+  if ( echo $file | grep -q "/update/\|/all/" && [ -f /var/apacheds/default/.inited ] ) || ( echo $file | grep -q "/init/\|/all/" && [ ! -f /var/apacheds/default/.inited ] ); then
   echo "run file '$file' for config"
-  if [[ "$file" == *.ldif ]]; then
-     ldapmodify -h 127.0.0.1 -p 10389 -D uid=admin,ou=system -w secret -a -c <<<"$(envsubst <$file)"
-  elif [[ "$file" == *.sh ]]; then
-    $file 1>&2 3>/tmp/run.sh
-    . /tmp/run.sh
-    rm /tmp/run.sh
-  else
-    echo "file typ from '$file' not allow for configuration" >&2 && exit 2
+    if [[ "$file" == *.ldif ]]; then
+       ldapmodify -h 127.0.0.1 -p 10389 -D uid=admin,ou=system -w $APACHEDS_PW -a -c <<<"$(envsubst <$file)"
+    elif [[ "$file" == *.sh ]]; then
+      $file 1>&2 3>/tmp/run.sh
+      . /tmp/run.sh
+      rm /tmp/run.sh
+    else
+      echo "file typ from '$file' not allow for configuration" >&2 && exit 2
+    fi
   fi
 done
 
+touch /var/apacheds/default/.inited
 kill $apacheds_pid
 
-timeout 30 bash -c 'while  nc -z localhost 10389; do sleep 1; done'
+timeout 30 bash -c 'while ! nc -z localhost 10389; do sleep 1; done'
 
 java $JAVA_OPTS $ADS_CONTROLS $ADS_EXTENDED_OPERATIONS $ADS_INTERMEDIATE_RESPONSES -Dlog4j.configuration=file:/usr/local/apacheds/instances/default/conf/log4j.properties -Dapacheds.log.dir=$ADS_INSTANCE/log -classpath $CLASSPATH org.apache.directory.server.UberjarMain $ADS_INSTANCE 2>&1

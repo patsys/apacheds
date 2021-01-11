@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "apacheds.fullname" . }}
+  labels:
+    {{- include "apacheds.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.ldap.port }}
+      targetPort: ldap
+      protocol: TCP
+      name: ldap
+  ports:
+    - port: {{ .Values.service.ldaps.port }}
+      targetPort: ldaps
+      protocol: TCP
+      name: ldap
+  selector:
+    {{- include "apacheds.selectorLabels" . | nindent 4 }}

@@ -1,8 +1,0 @@
-dn: ads-serverId=ldapServer,ou=servers,ads-directoryServiceId=default,ou=config
-changeType: modify
-replace: ads-keystoreFile
-ads-keystoreFile: /etc/apacheds/apacheds.jks
--
-replace: ads-certificatePassword
-ads-certificatePassword: $APACHEDS_TLS_KS_PWD
--
